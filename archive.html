@@ -1,0 +1,900 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>מדף הספרים</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;500;600;700&display=swap');
+
+  :root{
+    --wood-1:#2a1c12; --wood-2:#20140c;
+    --shelf-ledge:#4a3220; --shelf-ledge-2:#31210f;
+    --paper:#f4ecdb; --paper-edge:#e7dcc4;
+    --ink:#241a12; --ink-soft:#5c4d3c;
+    --oxblood:#7c2d2d; --gold:#c19a45; --gold-soft:#d8bd7e;
+    --line:#cbbb9c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    direction:rtl;font-family:'Assistant',system-ui,sans-serif;color:var(--paper);
+    background:radial-gradient(120% 80% at 50% -10%, #3a2718 0%, var(--wood-1) 45%, var(--wood-2) 100%);
+    min-height:100vh;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px 80px}
+
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    border-bottom:1px solid rgba(193,154,69,.28);padding-bottom:18px;margin-bottom:8px}
+  .brand{display:flex;flex-direction:column;gap:2px}
+  .brand .eyebrow{font-size:12px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;font-weight:600}
+  .brand h1{font-family:'Frank Ruhl Libre',Georgia,serif;font-weight:900;font-size:38px;line-height:1;margin:2px 0 0;color:var(--paper)}
+  .brand .count{font-size:13px;color:#b7a685;margin-top:6px}
+  .top-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{font-family:'Assistant',sans-serif;font-weight:600;font-size:14px;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;
+    transition:transform .12s ease, filter .12s ease, background .12s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--oxblood);color:#f6ecd9}
+  .btn-primary:hover{filter:brightness(1.1)}
+  .btn-ghost{background:rgba(244,236,219,.08);color:#e9ddc4;border:1px solid rgba(193,154,69,.3)}
+  .btn-ghost:hover{background:rgba(244,236,219,.14)}
+  .btn-quiet{background:transparent;color:#b7a685;border:1px solid rgba(183,166,133,.3)}
+  .btn-quiet:hover{color:#e9ddc4}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  /* ---- shelf sections ---- */
+  .shelves{margin-top:26px}
+  .section{margin-bottom:20px}
+  .sec-head{display:flex;align-items:center;gap:10px;margin:0 6px 8px}
+  .sec-head .lbl{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:15px;color:var(--gold-soft);letter-spacing:.02em}
+  .sec-head .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(193,154,69,.35),rgba(193,154,69,0))}
+  .sec-head .n{font-size:12px;color:#907c5f}
+  .books-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;min-height:158px;padding:0 8px}
+  .brack{background:linear-gradient(180deg,#2a1c12,#19120b);border:2px solid #3a2718;border-radius:7px;padding:11px 11px 6px;
+    column-width:238px;column-gap:12px;box-shadow:inset 0 3px 12px rgba(0,0,0,.5), 0 8px 20px -10px rgba(0,0,0,.5)}
+  .bstrip{break-inside:avoid;display:flex;align-items:stretch;height:30px;margin-bottom:5px;border-radius:3px;overflow:hidden;cursor:pointer;
+    box-shadow:0 1px 2px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08);transition:transform .1s;position:relative}
+  .bstrip:hover{transform:translateX(-3px)}
+  .bstrip:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+  .bstrip .bband{width:7px;flex:0 0 auto}
+  .bstrip .blabel{flex:1;display:flex;align-items:center;gap:7px;padding:0 10px;overflow:hidden}
+  .bstrip .btitle{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 1px rgba(0,0,0,.22)}
+  .bstrip .bauthor{font-family:'Assistant',sans-serif;font-size:10.5px;opacity:.82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
+  .bstrip .bread{margin-inline-start:auto;flex:0 0 auto;font-size:12px;font-weight:800}
+  .ledge{height:16px;border-radius:2px;background:linear-gradient(var(--shelf-ledge),var(--shelf-ledge-2));
+    box-shadow:0 10px 18px -6px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,220,160,.15);margin:0 0 4px}
+  .row-empty{color:#8a7a5d;font-size:13px;font-style:italic;padding:52px 10px;opacity:.8}
+
+  /* collapsed "already read" */
+  .collapsed-bar{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+    background:rgba(244,236,219,.05);border:1px solid rgba(193,154,69,.22);border-radius:9px;padding:11px 15px}
+  .collapsed-bar:hover{background:rgba(244,236,219,.09)}
+  .collapsed-bar .chev{transition:transform .2s ease;color:var(--gold-soft)}
+  .collapsed-bar.open .chev{transform:rotate(90deg)}
+  .collapsed-bar .lbl{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:15px;color:var(--gold-soft)}
+  .collapsed-bar .n{font-size:12px;color:#907c5f;margin-inline-start:auto}
+
+  .spine{position:relative;width:62px;height:154px;border-radius:3px 5px 5px 3px;cursor:pointer;
+    display:flex;flex-direction:row;align-items:flex-start;justify-content:center;gap:3px;padding:12px 7px 16px;color:#f3ead6;
+    box-shadow:2px 3px 8px -2px rgba(0,0,0,.55), inset -3px 0 6px -2px rgba(0,0,0,.35), inset 3px 0 4px -2px rgba(255,255,255,.14);
+    transition:transform .18s ease, box-shadow .18s ease;overflow:hidden;flex:0 0 auto}
+  .spine::before{content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg, rgba(255,255,255,.10), rgba(0,0,0,0) 22%, rgba(0,0,0,0) 78%, rgba(0,0,0,.28));pointer-events:none}
+  .spine .spine-title{writing-mode:vertical-rl;font-family:'Frank Ruhl Libre',Georgia,serif;font-weight:700;font-size:13px;line-height:1.16;
+    letter-spacing:.01em;max-height:122px;overflow:hidden;white-space:normal;text-align:start;text-shadow:0 1px 2px rgba(0,0,0,.4);flex:0 1 auto}
+  .spine .spine-author{writing-mode:vertical-rl;font-family:'Assistant',sans-serif;font-weight:600;font-size:10px;line-height:1;
+    letter-spacing:.01em;max-height:122px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;opacity:.82;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);flex:0 0 auto}
+  .spine .spine-band{position:absolute;left:0;right:0;bottom:9px;height:2px;background:var(--gold-soft);opacity:.5}
+  .spine .spine-read{position:absolute;top:6px;left:6px;width:17px;height:17px;border-radius:50%;
+    background:var(--gold-soft);color:#2a1c12;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.45);z-index:2}
+  .spine.is-read{filter:saturate(.85)}
+
+  .libtabs{display:flex;gap:6px;flex-wrap:wrap;margin:26px 2px 0}
+  .libtabs button{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:15px;padding:8px 18px;border-radius:9px;cursor:pointer;
+    border:1px solid rgba(193,154,69,.3);background:rgba(244,236,219,.05);color:#cbbb9c}
+  .libtabs button.on{background:var(--oxblood);color:#f6ecd9;border-color:var(--oxblood)}
+  .filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:22px 2px -2px}
+  .filterbar .flabel{font-size:12px;color:#b7a685;letter-spacing:.04em;margin-inline-end:2px}
+  .filterbar button{font-family:'Assistant',sans-serif;font-size:13px;padding:6px 13px;border-radius:20px;cursor:pointer;
+    border:1px solid rgba(193,154,69,.3);background:rgba(244,236,219,.06);color:#cbbb9c;font-weight:600}
+  .filterbar button.on{background:var(--gold-soft);color:#2a1c12;border-color:var(--gold-soft)}
+  .btn-read{background:transparent;color:var(--ba);border:1px solid var(--ba)}
+  .btn-read.on{background:var(--ba);color:#fff}
+  .spine:hover{transform:translateY(-14px) rotate(-1deg);box-shadow:3px 12px 18px -4px rgba(0,0,0,.6)}
+  .spine:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+  .empty{color:#b7a685;font-size:15px;padding:26px 12px;border:1px dashed rgba(193,154,69,.35);border-radius:10px;text-align:center}
+  .empty b{color:#e9ddc4}
+
+  .overlay{position:fixed;inset:0;z-index:50;background:rgba(15,9,4,.72);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;padding:22px}
+  .overlay.show{display:flex}
+  .card{background:var(--paper);color:var(--ink);width:100%;max-width:720px;max-height:90vh;overflow:auto;border-radius:12px;
+    box-shadow:0 30px 70px -20px rgba(0,0,0,.7);border:1px solid var(--paper-edge)}
+  .card-head{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line)}
+  .card-head h2{font-family:'Frank Ruhl Libre',Georgia,serif;font-weight:700;font-size:18px;margin:0;color:var(--ink)}
+  .x{background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:var(--ink-soft);padding:2px 8px;border-radius:6px}
+  .x:hover{background:rgba(0,0,0,.06);color:var(--ink)}
+  .card-body{padding:20px}
+
+  /* ---- themed back-cover ---- */
+  .backcover{
+    --bp:#6b5636; --ba:#3a2f22; --btint:#efe6d2; --btint2:#e7dcc4;
+    background:linear-gradient(160deg, var(--btint2), var(--btint) 42%, var(--paper));
+    border-radius:12px;padding:24px;border:1px solid rgba(0,0,0,.05);
+  }
+  .backcover.has-cover{position:relative;overflow:hidden;border:none;background:#1a1016;color:#f1e9df}
+  .backcover .bc-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(34px) brightness(.45) saturate(1.35);transform:scale(1.2);z-index:0}
+  .backcover .bc-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,10,16,.5),rgba(18,10,16,.86));z-index:0}
+  .backcover.has-cover > .detail, .backcover.has-cover > .backstrip, .backcover.has-cover > .move, .backcover.has-cover > .detail-actions{position:relative;z-index:1}
+  .backcover.has-cover .t-he{color:#fff}
+  .backcover.has-cover .t-en{color:rgba(243,237,221,.8)}
+  .backcover.has-cover .author{color:#f1e9df}
+  .backcover.has-cover .author .en{color:rgba(243,237,221,.72)}
+  .backcover.has-cover .year{background:rgba(255,255,255,.16);color:#fff}
+  .backcover.has-cover .blurb{color:#eadfd4}
+  .backcover.has-cover .blurb-head .lbl,.backcover.has-cover .blurb-head .tick{color:var(--gold-soft);background:var(--gold-soft)}
+  .backcover.has-cover .blurb-head .lbl{background:transparent}
+  .backcover.has-cover .backstrip{border-top-color:rgba(255,255,255,.18);color:rgba(243,237,221,.7)}
+  .backcover.has-cover .backstrip .bars{color:rgba(255,255,255,.4)}
+  .backcover.has-cover .move span{color:rgba(243,237,221,.72)}
+  .backcover.has-cover .move button{background:rgba(255,255,255,.1);color:#e9ddc9;border-color:rgba(255,255,255,.2)}
+  .backcover.has-cover .move button.on{background:var(--gold-soft);color:#211a12;border-color:var(--gold-soft)}
+  .backcover.has-cover .detail-actions{border-top-color:rgba(255,255,255,.16)}
+  .backcover.has-cover .btn-edit{color:#f1e9df;border-color:rgba(255,255,255,.28)}
+  .backcover.has-cover .btn-remove{color:#ff9b9b;border-color:rgba(255,155,155,.4)}
+  .detail{display:flex;gap:22px;flex-wrap:wrap}
+  .cover-wrap{flex:0 0 168px}
+  .cover{width:168px;height:250px;border-radius:4px;object-fit:cover;
+    background:linear-gradient(135deg,#e7dcc4,#cbbb9c);display:block}
+  .backcover .cover{box-shadow:0 16px 30px -12px var(--ba), 0 2px 0 rgba(255,255,255,.4)}
+  .cover.placeholder{display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:#6b5c47;
+    font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:17px}
+  .concept-cover{width:168px;height:250px;border-radius:4px;overflow:hidden;position:relative;display:flex;flex-direction:column;
+    justify-content:center;align-items:center;text-align:center;padding:18px;box-shadow:0 16px 30px -12px rgba(0,0,0,.45)}
+  .concept-cover .cc-motif{position:absolute;inset:0;opacity:.16}
+  .concept-cover .cc-motif svg{width:100%;height:100%;display:block}
+  .concept-cover .cc-frame{position:absolute;inset:8px;border:1px solid rgba(244,236,219,.35);border-radius:3px;pointer-events:none}
+  .concept-cover .cc-kicker{position:relative;font-family:'Assistant',sans-serif;font-size:10px;letter-spacing:.22em;
+    color:rgba(244,236,219,.7);margin-bottom:8px;text-transform:uppercase}
+  .concept-cover .cc-word{position:relative;font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:27px;line-height:1.12;color:#f6efdf;
+    text-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .concept-cover .cc-sub{position:relative;margin-top:12px;font-size:12px;color:rgba(244,236,219,.78);font-weight:600}
+  .concept-cover .cc-rule{position:relative;width:34px;height:2px;background:var(--gold-soft);margin:10px auto 0;opacity:.8}
+  .meta{flex:1 1 260px;min-width:240px}
+  .meta .t-he{font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:26px;line-height:1.15;margin:0 0 2px;color:var(--ink)}
+  .meta .t-en{font-family:'Frank Ruhl Libre',serif;font-style:italic;font-size:17px;color:var(--ink-soft);margin:0 0 12px;direction:ltr;text-align:right}
+  .meta .author{font-size:16px;font-weight:600;margin:0 0 2px;color:var(--ba)}
+  .meta .author .en{color:var(--ink-soft);font-weight:400;direction:ltr}
+  .meta .year{display:inline-block;margin-top:8px;font-size:12px;color:#fff;background:var(--ba);
+    padding:2px 10px;border-radius:20px;letter-spacing:.08em}
+  .blurb-head{display:flex;align-items:center;gap:9px;margin:20px 0 8px}
+  .blurb-head .tick{width:3px;height:16px;background:var(--ba);border-radius:2px}
+  .blurb-head .lbl{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ba);font-weight:700}
+  .blurb{font-family:'Frank Ruhl Libre',serif;font-size:16px;line-height:1.7;color:#33291d;white-space:pre-wrap}
+  .backstrip{margin-top:20px;padding-top:12px;border-top:1px solid var(--ba);display:flex;justify-content:space-between;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+  .backstrip .bars{letter-spacing:1px;color:var(--ba);opacity:.55;font-family:monospace}
+
+  .move{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:18px}
+  .move span{font-size:12px;color:var(--ink-soft);margin-inline-end:2px}
+  .move button{font-family:'Assistant',sans-serif;font-size:12.5px;padding:5px 12px;border-radius:20px;cursor:pointer;
+    border:1px solid var(--line);background:#fbf6ea;color:var(--ink-soft)}
+  .move button.on{background:var(--ba);color:#fff;border-color:var(--ba)}
+  .detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08)}
+  .btn-open{background:var(--ink);color:var(--paper)}
+  .btn-open:hover{filter:brightness(1.25)}
+  .btn-edit{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn-edit:hover{background:rgba(0,0,0,.05)}
+  .btn-remove{background:transparent;color:var(--oxblood);border:1px solid rgba(124,45,45,.35);margin-inline-start:auto}
+  .btn-remove:hover{background:rgba(124,45,45,.08)}
+
+  /* form */
+  .search-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .search-row input{flex:1 1 220px}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;letter-spacing:.04em}
+  input[type=text], textarea{width:100%;font-family:'Assistant',sans-serif;font-size:14px;padding:9px 11px;border:1px solid var(--line);
+    border-radius:8px;background:#fbf6ea;color:var(--ink)}
+  input:focus,textarea:focus{outline:2px solid var(--gold-soft);outline-offset:0;border-color:var(--gold)}
+  textarea{resize:vertical;min-height:74px;line-height:1.5}
+  .two{display:flex;gap:10px;flex-wrap:wrap}
+  .two .field{flex:1 1 180px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{font-family:'Assistant',sans-serif;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--line);background:#fbf6ea;color:var(--ink-soft);font-weight:600}
+  .seg button.on{background:var(--oxblood);color:#f6ecd9;border-color:var(--oxblood)}
+  .status{font-size:13px;min-height:18px;color:var(--ink-soft);margin:2px 0 10px}
+  .status.err{color:var(--oxblood)} .status.ok{color:#3f6b3a}
+  .form-actions{display:flex;gap:8px;margin-top:8px;padding-top:14px;border-top:1px solid var(--line)}
+  .ltr{direction:ltr;text-align:left}
+
+  .reader-card{background:transparent;width:100%;max-width:760px;max-height:92vh;display:flex;flex-direction:column}
+  .reader-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;color:var(--paper)}
+  .reader-head .rt{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .reader-head .save-state{font-size:12px;color:var(--gold-soft);min-width:70px;text-align:left}
+  .toolbar{display:flex;gap:6px;background:#efe6d2;border:1px solid var(--paper-edge);border-bottom:none;border-radius:10px 10px 0 0;padding:8px 10px;flex-wrap:wrap}
+  .tbtn{background:#fbf6ea;border:1px solid var(--line);border-radius:6px;padding:5px 11px;font-size:14px;cursor:pointer;color:var(--ink);font-weight:600;font-family:'Assistant',sans-serif}
+  .tbtn:hover{background:#fff}
+  .page{background:var(--paper);color:var(--ink);border:1px solid var(--paper-edge);border-radius:0 0 10px 10px;padding:34px 40px;overflow:auto;flex:1;
+    box-shadow:0 30px 70px -20px rgba(0,0,0,.7);font-size:16px;line-height:1.75;min-height:200px}
+  .page:focus{outline:none}
+  .page[data-empty="true"]::before{content:attr(data-placeholder);color:#a3937b;pointer-events:none}
+  .page a{color:var(--oxblood);text-decoration:underline;text-underline-offset:2px}
+  .page h3{font-family:'Frank Ruhl Libre',serif;margin:1.1em 0 .3em}
+  .page ul{padding-inline-start:22px}
+  .a4-note{color:#b7a685;font-size:11px;text-align:center;margin-top:8px}
+
+  @media (max-width:560px){
+    .brand h1{font-size:30px}
+    .card-body{padding:14px}
+    .backcover{padding:18px}
+    .page{padding:22px 20px}
+    .cover-wrap{flex:1 1 100%}
+    .cover{width:140px;height:210px;margin:0 auto}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .spine,.btn,.collapsed-bar .chev{transition:none}
+    .spine:hover{transform:none}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">הקריאה שלי</span>
+      <h1>ארכיון הקריאה</h1>
+      <span class="count" id="count">—</span>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-primary" id="addBtn">+ הוסף</button>
+      <button class="btn btn-ghost" id="exportBtn">גיבוי</button>
+      <button class="btn btn-quiet" id="importBtn">שחזור</button>
+      <input type="file" id="importFile" accept="application/json" hidden />
+    </div>
+  </header>
+  <div class="shelves" id="shelves"></div>
+</div>
+
+<div class="overlay" id="detailOverlay">
+  <div class="card">
+    <div class="card-head"><h2 id="detailHeadTitle">&nbsp;</h2><button class="x" data-close>&times;</button></div>
+    <div class="card-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="formOverlay">
+  <div class="card">
+    <div class="card-head"><h2 id="formTitle">הוסף</h2><button class="x" data-close>&times;</button></div>
+    <div class="card-body">
+      <div class="field">
+        <label>חיפוש — שם ספר / מאמר / סופר</label>
+        <div class="search-row">
+          <input type="text" id="q" placeholder="לדוגמה: אני מלאלה  /  הרלן קובן" />
+          <button class="btn btn-primary" id="searchBtn">חפש ומלא</button>
+          <button class="btn btn-quiet" id="googleBtn">חפש בגוגל</button>
+        </div>
+      </div>
+      <div class="status" id="searchStatus"></div>
+
+      <div class="field">
+        <label>לאיזה מדף</label>
+        <div class="seg" id="shelfSeg">
+          <button type="button" data-shelf="aread">קראתי</button>
+          <button type="button" data-shelf="areading">קורא עכשיו</button>
+          <button type="button" data-shelf="ainterested">מעניין אותי</button>
+          <button type="button" data-shelf="arecommended">מומלץ</button>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="field"><label>כותרת (עברית)</label><input type="text" id="titleHe" /></div>
+        <div class="field"><label>כותרת (אנגלית)</label><input type="text" id="titleEn" class="ltr" /></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>מחבר (עברית)</label><input type="text" id="authorHe" /></div>
+        <div class="field"><label>מחבר (אנגלית)</label><input type="text" id="authorEn" class="ltr" /></div>
+      </div>
+      <div class="two">
+        <div class="field" style="flex:0 0 120px"><label>שנה</label><input type="text" id="year" inputmode="numeric" /></div>
+        <div class="field"><label>קישור לתמונת כריכה</label><input type="text" id="coverUrl" class="ltr" placeholder="https://..." /></div>
+      </div>
+      <div class="field">
+        <label>מהגב / המלצות</label>
+        <textarea id="blurb" placeholder="הטקסט שמאחורי הספר — נכנס אוטומטית מהחיפוש, וניתן לעריכה"></textarea>
+      </div>
+      <div class="field">
+        <label>מילת מפתח לכריכה מושגית (למאמר ללא כריכה)</label>
+        <input type="text" id="keyword" placeholder="לדוגמה: מוסר · פרפורמטיביות · מומחיות" />
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="saveBtn">שמור למדף</button>
+        <button class="btn btn-edit" data-close>ביטול</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="readerOverlay">
+  <div class="reader-card">
+    <div class="reader-head">
+      <div class="rt" id="readerTitle"></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="save-state" id="saveState"></span>
+        <button class="btn btn-ghost" data-close>סגור</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="tbtn" data-cmd="bold"><b>B</b></button>
+      <button class="tbtn" data-cmd="italic"><i>I</i></button>
+      <button class="tbtn" data-cmd="insertUnorderedList">• רשימה</button>
+      <button class="tbtn" id="linkBtn">🔗 קישור</button>
+      <button class="tbtn" data-cmd="removeFormat">נקה</button>
+    </div>
+    <div class="page" id="page" contenteditable="true" spellcheck="false"
+      data-placeholder="כאן אתה כותב על הספר. אפשר להוסיף קישורים, להדגיש, לעשות רשימה. הכל נשמר אוטומטית."></div>
+    <div class="a4-note">מיועד לעד עמוד A4 בערך · נשמר אוטומטית</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- storage ---------- */
+  var mem={};
+  var hasStore=!!(window.storage && window.storage.get);
+  var hasLS=(function(){try{var k="__bs_t";window.localStorage.setItem(k,"1");window.localStorage.removeItem(k);return true;}catch(e){return false;}})();
+  async function sget(k){
+    if(hasStore){try{var r=await window.storage.get(k);return r?r.value:null;}catch(e){}}
+    if(hasLS){try{return window.localStorage.getItem(k);}catch(e){}}
+    return (k in mem)?mem[k]:null;
+  }
+  async function sset(k,v){
+    if(hasStore){try{await window.storage.set(k,v);return;}catch(e){}}
+    if(hasLS){try{window.localStorage.setItem(k,v);return;}catch(e){}}
+    mem[k]=v;
+  }
+  async function sdel(k){
+    if(hasStore){try{await window.storage.delete(k);return;}catch(e){}}
+    if(hasLS){try{window.localStorage.removeItem(k);return;}catch(e){}}
+    delete mem[k];
+  }
+  var IDX="archive:index"; function bkey(id){return "archive:book:"+id;}
+  async function getIndex(){ var r=await sget(IDX); if(!r)return[]; try{return JSON.parse(r);}catch(e){return[];} }
+  async function setIndex(a){ await sset(IDX,JSON.stringify(a)); }
+  async function getBook(id){ var r=await sget(bkey(id)); if(!r)return null; try{return JSON.parse(r);}catch(e){return null;} }
+  async function saveBook(b){ await sset(bkey(b.id),JSON.stringify(b)); var i=await getIndex(); if(i.indexOf(b.id)===-1){i.push(b.id);await setIndex(i);} }
+  async function removeBook(id){ await sdel(bkey(id)); var i=await getIndex(); i=i.filter(function(x){return x!==id;}); await setIndex(i); }
+  async function allBooks(){ var i=await getIndex(),o=[]; for(var k=0;k<i.length;k++){var b=await getBook(i[k]); if(b){
+        if(!b.shelf)b.shelf="ainterested";
+        b.collection="personal";
+        b.read = isReadShelf(b.shelf);
+        o.push(b);} } return o; }
+
+  /* ---------- helpers ---------- */
+  function $(s){return document.querySelector(s);}
+  function el(t,c){var e=document.createElement(t);if(c)e.className=c;return e;}
+  function uid(){return "b"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+  function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function escAttr(s){return (s||"").replace(/'/g,"\\'").replace(/"/g,"&quot;");}
+
+  var SPINES=[["#3d5a53","#f0e6cf"],["#7c2d2d","#f2e4cf"],["#2f4858","#e9e0c9"],["#6b5636","#f4ead0"],["#4a3d5c","#ece2d1"],
+    ["#565f3b","#eee6cd"],["#883c2a","#f2e2c9"],["#33413a","#e9e2cd"],["#5a4632","#f0e6cd"],["#414f66","#e7e0cf"]];
+  function spineColor(str){var h=0;str=str||"x";for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;return SPINES[h%SPINES.length];}
+  function hslToHex(h,s,l){s/=100;l/=100;var a=s*Math.min(l,1-l);function f(n){var k=(n+h/30)%12;var c=l-a*Math.max(Math.min(k-3,9-k,1),-1);return Math.round(255*c);}return {r:f(0),g:f(8),b:f(4)};}
+  function hueHash(str){var h=0;str=str||"x";for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;return h%360;}
+  // each item's signature colour — its themePrimary if set, else a unique hue. Used for BOTH spine and back cover.
+  function signatureBg(b){
+    if(b.coverColor && toRgb(b.coverColor)) return b.coverColor;
+    if(b.themePrimary && toRgb(b.themePrimary)) return b.themePrimary;
+    return toHex(hslToHex(hueHash(b.titleHe||b.titleEn||b.id), 42, 38));
+  }
+  function dominantColor(url){
+    return new Promise(function(resolve){
+      try{
+        var img=new Image(); var src=url;
+        if(!/^data:/.test(url)){ img.crossOrigin="anonymous"; src="https://wsrv.nl/?url="+encodeURIComponent(url)+"&w=72&output=jpg"; }
+        img.onload=function(){
+          try{
+            var s=32,cv=document.createElement("canvas");cv.width=s;cv.height=s;var ctx=cv.getContext("2d");ctx.drawImage(img,0,0,s,s);
+            var d=ctx.getImageData(0,0,s,s).data,map={},bestK=null,bestC=0,ar=0,ag=0,ab=0,an=0;
+            for(var i=0;i<d.length;i+=4){var R=d[i],G=d[i+1],B=d[i+2];if(d[i+3]<128)continue;ar+=R;ag+=G;ab+=B;an++;
+              var mx=Math.max(R,G,B),mn=Math.min(R,G,B),sat=mx-mn;var w=1+sat/48;if(mx<38||mn>224)w*=0.25;
+              var key=(R>>5)+","+(G>>5)+","+(B>>5);map[key]=(map[key]||0)+w;if(map[key]>bestC){bestC=map[key];bestK=key;}}
+            if(bestK){var p=bestK.split(",");resolve(toHex({r:p[0]*32+16,g:p[1]*32+16,b:p[2]*32+16}));}
+            else if(an)resolve(toHex({r:ar/an,g:ag/an,b:ab/an}));else resolve(null);
+          }catch(e){resolve(null);}
+        };
+        img.onerror=function(){resolve(null);};
+        img.src=src;
+      }catch(e){resolve(null);}
+    });
+  }
+  function shade(hex,amt){var c=hex.replace("#","");if(c.length===3)c=c.split("").map(function(x){return x+x;}).join("");
+    var n=parseInt(c,16),r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;
+    r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));return "rgb("+r+","+g+","+b+")";}
+
+  /* ---------- color theory for per-book theming ---------- */
+  function toRgb(hex){hex=(hex||"").replace("#","");if(hex.length===3)hex=hex.split("").map(function(c){return c+c;}).join("");
+    var n=parseInt(hex,16);if(isNaN(n)||hex.length<6)return null;return {r:(n>>16)&255,g:(n>>8)&255,b:n&255};}
+  function hx(n){n=Math.max(0,Math.min(255,Math.round(n)));var s=n.toString(16);return s.length<2?"0"+s:s;}
+  function toHex(c){return "#"+hx(c.r)+hx(c.g)+hx(c.b);}
+  function mix(a,b,t){return {r:a.r+(b.r-a.r)*t,g:a.g+(b.g-a.g)*t,b:a.b+(b.b-a.b)*t};}
+  function lum(c){return (0.299*c.r+0.587*c.g+0.114*c.b)/255;}
+  function deriveTheme(b){
+    var pHex=signatureBg(b);
+    var aHex=(b.themeAccent&&toRgb(b.themeAccent))?b.themeAccent:pHex;
+    var p=toRgb(pHex)||{r:107,g:86,b:54}, a=toRgb(aHex)||p;
+    if(lum(a)>0.5){var f=0.44/Math.max(lum(a),0.01);a={r:a.r*f,g:a.g*f,b:a.b*f};}
+    var paper=toRgb("#f4ecdb");
+    return {primary:toHex(p),accent:toHex(a),tint:toHex(mix(p,paper,0.88)),tint2:toHex(mix(p,paper,0.80))};
+  }
+
+  /* ---------- concept covers (for items without a real cover) ---------- */
+  var KEYWORD_MAP={
+    art_ball2003:"פרפורמטיביות", art_zigon2007:"מוסר", art_plotkin2023:"אמהוּת",
+    art_nir:"ריכוזיות", art_rotman_golden2026:"טשטוש", art_ingersoll2001:"דלת מסתובבת",
+    art_eyal2019:"מומחיות", art_abbott1988:"סמכות שיפוט", art_berger1967:"לגיטימציה",
+    art_cohenfilc2017:"יציאה וקול", art_dewey1938:"ניסיון", art_goffman1959:"במה",
+    art_hargreaves1994:"קולגיאליות", art_huberman1993:"מחזור חיים", art_leanapil2006:"הון חברתי",
+    art_lehmanwilzig1991:"מעין־יציאה", art_lipsky1980:"שיקול דעת", art_lortie1975:"חניכות הצפייה",
+    art_mitchell2001:"הטמעה", art_mizrahi2014:"מדינת רווחה", art_pendola2024:"עזיבה",
+    art_santoro2018:"דמורליזציה", art_smithingersoll2004:"חניכה", art_veenman1984:"הלם המציאות",
+    art_au_eyal2022:"מומחיות הדיוטית"
+  };
+  function getKeyword(b){
+    if(b.keyword && b.keyword.trim()) return b.keyword.trim();
+    if(KEYWORD_MAP[b.id]) return KEYWORD_MAP[b.id];
+    var t=(b.titleHe||b.titleEn||"").split(/\s+/).filter(function(w){return w.length>3;});
+    return t.length?t[t.length-1]:(b.titleHe||b.titleEn||"מושג");
+  }
+  function motifSvg(i){
+    var C='rgba(244,236,219,1)';
+    if(i===0) return '<svg viewBox="0 0 168 250" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="'+C+'" stroke-width="2">'+
+      '<circle cx="84" cy="120" r="30"/><circle cx="84" cy="120" r="58"/><circle cx="84" cy="120" r="86"/><circle cx="84" cy="120" r="114"/></g></svg>';
+    if(i===1) return '<svg viewBox="0 0 168 250" preserveAspectRatio="xMidYMid slice"><g stroke="'+C+'" stroke-width="3">'+
+      '<line x1="-20" y1="0" x2="188" y2="208"/><line x1="-20" y1="42" x2="188" y2="250"/><line x1="-20" y1="-42" x2="188" y2="166"/><line x1="-20" y1="84" x2="188" y2="292"/></g></svg>';
+    if(i===2){var d='';for(var y=20;y<250;y+=28){for(var x=20;x<168;x+=28){d+='<circle cx="'+x+'" cy="'+y+'" r="3.4" fill="'+C+'"/>';}}return '<svg viewBox="0 0 168 250" preserveAspectRatio="xMidYMid slice">'+d+'</svg>';}
+    return '<svg viewBox="0 0 168 250" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="'+C+'" stroke-width="3">'+
+      '<path d="M-10 70 Q 84 20 178 70"/><path d="M-10 120 Q 84 70 178 120"/><path d="M-10 170 Q 84 120 178 170"/><path d="M-10 220 Q 84 170 178 220"/></g></svg>';
+  }
+  function conceptCover(b, th){
+    var kw=getKeyword(b);
+    var sub=esc(b.authorHe||b.authorEn||"");
+    var bg=th.primary;
+    var motif=motifSvg(hueHash(kw||b.id)%4);
+    return '<div class="concept-cover" style="background:linear-gradient(160deg,'+bg+','+shade(bg,-34)+')">'+
+      '<div class="cc-motif">'+motif+'</div>'+
+      '<div class="cc-frame"></div>'+
+      '<div class="cc-kicker">מושג</div>'+
+      '<div class="cc-word">'+esc(kw)+'</div>'+
+      '<div class="cc-rule"></div>'+
+      (sub?'<div class="cc-sub">'+sub+'</div>':'')+
+    '</div>';
+  }
+
+  /* ---------- shelves ---------- */
+  var SHELVES=[
+    {key:"aread",label:"ספרים שקראתי",lib:"personal",empty:"עוד לא הוספת ספרים שקראת."},
+    {key:"areading",label:"ספרים שאני קורא עכשיו",lib:"personal",empty:"אין כרגע ספר בקריאה."},
+    {key:"ainterested",label:"ספרים שמעניינים אותי",lib:"personal",empty:"אין עדיין ספרים ברשימת העניין."},
+    {key:"arecommended",label:"ספרים מומלצים",lib:"personal",empty:"אין עדיין המלצות."}
+  ];
+  var READ_SHELVES={aread:1};
+  function isReadShelf(s){ return !!READ_SHELVES[s]; }
+  var readOpen=false;
+  var currentId=null;
+
+  function paintStrip(s,bg){
+    var rgb=toRgb(bg)||{r:107,g:86,b:54};
+    var txt=lum(rgb)>0.56?"#211a12":"#f3ead6";
+    s.style.background="linear-gradient(180deg,"+bg+", "+shade(bg,-20)+")";
+    s.style.color=txt;
+    var band=s.querySelector(".bband"); if(band)band.style.background=shade(bg,-42);
+  }
+  function spineEl(b){
+    var bg=signatureBg(b);
+    var titleTxt=b.titleHe||b.titleEn||"ללא כותרת";
+    var authTxt=b.authorHe||b.authorEn||"";
+    var s=el("div","bstrip");
+    s.setAttribute("tabindex","0");s.setAttribute("role","button");
+    s.setAttribute("aria-label","פתח את "+titleTxt+(authTxt?" מאת "+authTxt:""));
+    s.title=titleTxt+(authTxt?" — "+authTxt:"");
+    var band=el("div","bband"); s.appendChild(band);
+    var lbl=el("div","blabel");
+    var t=el("span","btitle"); t.textContent=titleTxt; lbl.appendChild(t);
+    if(authTxt){ var au=el("span","bauthor"); au.textContent="· "+authTxt; lbl.appendChild(au); }
+    if(b.read){ var rd=el("span","bread"); rd.textContent="✓"; lbl.appendChild(rd); }
+    s.appendChild(lbl);
+    paintStrip(s,bg);
+    if(b.coverUrl && !b.coverColor){
+      dominantColor(b.coverUrl).then(function(col){ if(col){ b.coverColor=col; paintStrip(s,col); saveBook(b); } });
+    }
+    s.addEventListener("click",function(){openDetail(b.id);});
+    s.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();openDetail(b.id);}});
+    return s;
+  }
+
+  var readFilter="all";
+  var libFilter="personal";
+  function passesFilter(b){ return readFilter==="all" || (readFilter==="read"?!!b.read:!b.read); }
+  function passesLib(b){ return true; }
+  function shelfInLib(sh){ return true; }
+
+  async function render(){
+    var all=await allBooks();
+    var books=all.filter(passesLib);
+    var total=books.length;
+    var readCount=books.filter(function(b){return b.read;}).length;
+    $("#count").textContent = total? (total+" ספרים בארכיון · "+readCount+" נקראו") : "הארכיון עוד ריק";
+    var host=$("#shelves");host.innerHTML="";
+
+    if(!total){
+      var e=el("div","empty");
+      e.innerHTML='עדיין ריק. לחץ <b>“+ הוסף”</b>, הקלד שם ספר או מחבר — הפרטים יימשכו לבד.';
+      host.appendChild(e);return;
+    }
+
+    // full shelves — show every shelf that belongs to the current library (even if empty)
+    SHELVES.forEach(function(sh){
+      if(!shelfInLib(sh)) return;
+      var items=books.filter(function(b){return b.shelf===sh.key;});
+      var sec=el("div","section");
+      var head=el("div","sec-head");
+      var lbl=el("span","lbl");lbl.textContent=sh.label;head.appendChild(lbl);
+      head.appendChild(el("div","rule"));
+      var n=el("span","n");n.textContent=items.length;head.appendChild(n);
+      sec.appendChild(head);
+      var row=el("div","brack");
+      if(items.length){ items.forEach(function(b){row.appendChild(spineEl(b));}); }
+      else{ var re=el("div","row-empty");re.textContent=sh.empty;row.appendChild(re); }
+      sec.appendChild(row);
+      host.appendChild(sec);
+    });
+  }
+
+  /* ---------- detail (themed back cover) ---------- */
+  async function openDetail(id){
+    var b=await getBook(id); if(!b)return; if(!b.shelf)b.shelf="ainterested";
+    currentId=id;
+    var th=deriveTheme(b);
+    $("#detailHeadTitle").innerHTML="&nbsp;";
+    var body=$("#detailBody");
+    var coverHtml=b.coverUrl
+      ? '<img class="cover" src="'+esc(b.coverUrl)+'" alt="כריכה" onerror="this.replaceWith(window.makePlaceholder(\''+escAttr(b.titleHe||b.titleEn)+'\'))"/>'
+      : conceptCover(b, th);
+
+    var authorLine="";
+    if(b.authorHe||b.authorEn){
+      authorLine='<p class="author">'+esc(b.authorHe||"");
+      if(b.authorEn) authorLine+=' <span class="en">· '+esc(b.authorEn)+'</span>';
+      authorLine+='</p>';
+    }
+    var footAuthor=esc(b.authorEn||b.authorHe||"");
+    var coverMode=!!b.coverUrl;
+    body.innerHTML=
+      '<div class="backcover'+(coverMode?' has-cover':'')+'" id="bc">'+
+        (coverMode?'<div class="bc-bg" style="background-image:url('+esc(b.coverUrl)+')"></div><div class="bc-tint"></div>':'')+
+        '<div class="detail">'+
+          '<div class="cover-wrap">'+coverHtml+'</div>'+
+          '<div class="meta">'+
+            '<h3 class="t-he">'+esc(b.titleHe||b.titleEn||"ללא כותרת")+'</h3>'+
+            (b.titleEn?'<p class="t-en">'+esc(b.titleEn)+'</p>':'')+
+            authorLine+
+            (b.year?'<span class="year">'+esc(b.year)+'</span>':'')+
+            (b.blurb?'<div class="blurb-head"><span class="tick"></span><span class="lbl">מהגב</span></div><div class="blurb">'+esc(b.blurb)+'</div>':'')+
+          '</div>'+
+        '</div>'+
+        (b.blurb||footAuthor?'<div class="backstrip"><span>'+(footAuthor||'')+(b.year?' · '+esc(b.year):'')+'</span><span class="bars">||‖|‖‖|‖|</span></div>':'')+
+        '<div class="move" id="moveBox">'+
+          '<span>מדף:</span>'+
+          '<button data-move="aread">קראתי</button>'+
+          '<button data-move="areading">קורא עכשיו</button>'+
+          '<button data-move="ainterested">מעניין אותי</button>'+
+          '<button data-move="arecommended">מומלץ</button>'+
+        '</div>'+
+        '<div class="detail-actions">'+
+          '<button class="btn btn-open" id="openReader">פתח את הספר</button>'+
+          '<button class="btn btn-edit" id="grabCover">משוך כריכה</button>'+
+          '<button class="btn btn-edit" id="editBook">ערוך פרטים</button>'+
+          '<button class="btn btn-remove" id="removeBook">הסר</button>'+
+        '</div>'+
+      '</div>';
+
+    var bc=$("#bc");
+    bc.style.setProperty("--bp",th.primary);
+    bc.style.setProperty("--ba",th.accent);
+    bc.style.setProperty("--btint",th.tint);
+    bc.style.setProperty("--btint2",th.tint2);
+
+    // highlight current shelf in move box
+    Array.prototype.forEach.call(document.querySelectorAll("#moveBox button"),function(btn){
+      if(btn.getAttribute("data-move")===b.shelf) btn.classList.add("on");
+      btn.addEventListener("click",async function(){
+        var fresh=await getBook(id); if(!fresh)return;
+        fresh.shelf=btn.getAttribute("data-move"); fresh.read=isReadShelf(fresh.shelf);
+        await saveBook(fresh);
+        Array.prototype.forEach.call(document.querySelectorAll("#moveBox button"),function(x){x.classList.remove("on");});
+        btn.classList.add("on");
+        render();
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("#libBox button"),function(btn){
+      if(btn.getAttribute("data-lib")===b.collection) btn.classList.add("on");
+      btn.addEventListener("click",async function(){
+        var fresh=await getBook(id); if(!fresh)return; fresh.collection=btn.getAttribute("data-lib");
+        await saveBook(fresh);
+        Array.prototype.forEach.call(document.querySelectorAll("#libBox button"),function(x){x.classList.remove("on");});
+        btn.classList.add("on");
+        render();
+      });
+    });
+
+    $("#openReader").addEventListener("click",function(){openReader(id);});
+    $("#grabCover").addEventListener("click",async function(){
+      var gb=$("#grabCover"); gb.disabled=true; var old=gb.textContent; gb.textContent="מחפש כריכה…";
+      var fresh=await getBook(id); if(!fresh){gb.disabled=false;gb.textContent=old;return;}
+      var cover=await findCover(fresh);
+      if(cover){ fresh.coverUrl=cover; await saveBook(fresh); openDetail(id); }
+      else { gb.textContent="לא נמצאה כריכה"; setTimeout(function(){gb.disabled=false;gb.textContent=old;},1600); }
+    });
+    $("#editBook").addEventListener("click",function(){closeOverlay($("#detailOverlay"));openForm(b);});
+    $("#removeBook").addEventListener("click",async function(){
+      if(confirm("להסיר את “"+(b.titleHe||b.titleEn||"הפריט")+"”? הכתיבה שלך עליו תימחק גם.")){
+        await removeBook(id);closeOverlay($("#detailOverlay"));render();
+      }
+    });
+    showOverlay($("#detailOverlay"));
+  }
+
+  window.makePlaceholder=function(title){var d=document.createElement("div");d.className="cover placeholder";d.textContent=title||"ללא כריכה";return d;};
+
+  // best-effort: pull dominant color from the cover image; silently ignore if blocked
+  function tryCoverColor(b, bc){
+    if(!b.coverUrl) return;
+    try{
+      var img=new Image(); img.crossOrigin="anonymous";
+      img.onload=function(){
+        try{
+          var cv=document.createElement("canvas"),w=24,h=Math.max(1,Math.round(24*img.height/img.width));
+          cv.width=w;cv.height=h;var ctx=cv.getContext("2d");ctx.drawImage(img,0,0,w,h);
+          var d=ctx.getImageData(0,0,w,h).data,r=0,g=0,bb=0,c=0;
+          for(var i=0;i<d.length;i+=4){ if(d[i+3]<128)continue; r+=d[i];g+=d[i+1];bb+=d[i+2];c++; }
+          if(!c)return; r/=c;g/=c;bb/=c;
+          var p={r:r,g:g,b:bb}, a={r:r,g:g,b:bb};
+          if(lum(a)>0.5){var f=0.44/Math.max(lum(a),0.01);a={r:a.r*f,g:a.g*f,b:a.b*f};}
+          var paper=toRgb("#f4ecdb");
+          bc.style.setProperty("--bp",toHex(p));
+          bc.style.setProperty("--ba",toHex(a));
+          bc.style.setProperty("--btint",toHex(mix(p,paper,0.88)));
+          bc.style.setProperty("--btint2",toHex(mix(p,paper,0.80)));
+        }catch(e){/* tainted canvas — keep existing theme */}
+      };
+      img.src=b.coverUrl;
+    }catch(e){}
+  }
+
+  /* ---------- reader ---------- */
+  var readerId=null,saveTimer=null;
+  async function openReader(id){
+    var b=await getBook(id); if(!b)return; readerId=id;
+    $("#readerTitle").textContent=b.titleHe||b.titleEn||"הספר";
+    var page=$("#page");page.innerHTML=b.notes||"";updateEmpty();$("#saveState").textContent="";
+    closeOverlay($("#detailOverlay"));showOverlay($("#readerOverlay"));
+    setTimeout(function(){page.focus();},80);
+  }
+  function updateEmpty(){var p=$("#page");p.setAttribute("data-empty",p.textContent.trim()===""&&p.children.length===0?"true":"false");}
+  function scheduleSave(){
+    $("#saveState").textContent="שומר…";clearTimeout(saveTimer);
+    saveTimer=setTimeout(async function(){
+      if(!readerId)return;var b=await getBook(readerId);if(!b)return;
+      b.notes=$("#page").innerHTML;await saveBook(b);$("#saveState").textContent="נשמר ✓";
+    },550);
+  }
+  $("#page").addEventListener("input",function(){updateEmpty();scheduleSave();});
+  Array.prototype.forEach.call(document.querySelectorAll(".tbtn[data-cmd]"),function(btn){
+    btn.addEventListener("mousedown",function(e){e.preventDefault();});
+    btn.addEventListener("click",function(){document.execCommand(btn.getAttribute("data-cmd"),false,null);$("#page").focus();updateEmpty();scheduleSave();});
+  });
+  $("#linkBtn").addEventListener("mousedown",function(e){e.preventDefault();});
+  $("#linkBtn").addEventListener("click",function(){
+    var url=prompt("הדבק כתובת קישור (URL):","https://");if(!url)return;
+    if(!/^https?:\/\//i.test(url))url="https://"+url;
+    document.execCommand("createLink",false,url);
+    var links=$("#page").querySelectorAll('a[href="'+url+'"]');
+    Array.prototype.forEach.call(links,function(a){a.setAttribute("target","_blank");a.setAttribute("rel","noopener");});
+    $("#page").focus();scheduleSave();
+  });
+
+  /* ---------- form ---------- */
+  var editingId=null, formShelf="ainterested", formCollection="phd", formPrimary="", formAccent="";
+  function setSeg(v){formShelf=v;Array.prototype.forEach.call(document.querySelectorAll("#shelfSeg button"),function(b){b.classList.toggle("on",b.getAttribute("data-shelf")===v);});}
+  Array.prototype.forEach.call(document.querySelectorAll("#shelfSeg button"),function(b){b.addEventListener("click",function(){setSeg(b.getAttribute("data-shelf"));});});
+  function setLibSeg(v){formCollection=v;Array.prototype.forEach.call(document.querySelectorAll("#libSeg button"),function(b){b.classList.toggle("on",b.getAttribute("data-lib")===v);});}
+  Array.prototype.forEach.call(document.querySelectorAll("#libSeg button"),function(b){b.addEventListener("click",function(){setLibSeg(b.getAttribute("data-lib"));});});
+
+  function openForm(book){
+    editingId=book?book.id:null;
+    formPrimary=book?(book.themePrimary||""):"";
+    formAccent=book?(book.themeAccent||""):"";
+    $("#formTitle").textContent=book?"ערוך פרטים":"הוסף";
+    $("#q").value="";$("#searchStatus").textContent="";$("#searchStatus").className="status";
+    $("#titleHe").value=book?book.titleHe||"":"";
+    $("#titleEn").value=book?book.titleEn||"":"";
+    $("#authorHe").value=book?book.authorHe||"":"";
+    $("#authorEn").value=book?book.authorEn||"":"";
+    $("#year").value=book?book.year||"":"";
+    $("#coverUrl").value=book?book.coverUrl||"":"";
+    $("#blurb").value=book?book.blurb||"":"";
+    $("#keyword").value=book?(book.keyword||KEYWORD_MAP[book.id]||""):"";
+    setSeg(book?(book.shelf||"ainterested"):"ainterested");
+    var defLib = book?(book.collection||"phd"):(libFilter==="personal"?"personal":"phd");
+    setLibSeg(defLib);
+    showOverlay($("#formOverlay"));
+  }
+  $("#addBtn").addEventListener("click",function(){openForm(null);});
+  $("#googleBtn").addEventListener("click",function(){
+    var q=$("#q").value.trim();if(!q){$("#q").focus();return;}
+    window.open("https://www.google.com/search?q="+encodeURIComponent(q),"_blank","noopener");
+  });
+  $("#saveBtn").addEventListener("click",async function(){
+    var b={id:editingId||uid(),shelf:formShelf,collection:formCollection,
+      titleHe:$("#titleHe").value.trim(),titleEn:$("#titleEn").value.trim(),
+      authorHe:$("#authorHe").value.trim(),authorEn:$("#authorEn").value.trim(),
+      year:$("#year").value.trim(),coverUrl:$("#coverUrl").value.trim(),blurb:$("#blurb").value.trim(),keyword:$("#keyword").value.trim(),
+      themePrimary:formPrimary,themeAccent:formAccent,read:isReadShelf(formShelf),notes:""};
+    if(!b.titleHe&&!b.titleEn){setStatus("צריך לפחות כותרת אחת (עברית או אנגלית).","err");return;}
+    if(editingId){var old=await getBook(editingId);if(old){b.notes=old.notes;}}
+    await saveBook(b);closeOverlay($("#formOverlay"));render();
+  });
+  function setStatus(m,k){var s=$("#searchStatus");s.textContent=m;s.className="status "+(k||"");}
+
+  /* ---------- auto-fill (multi-source, resilient) ---------- */
+  function isHeb(s){return /[\u0590-\u05FF]/.test(s||"");}
+  function setIfEmpty(sel,val){ if(val && !$(sel).value.trim()) $(sel).value=val; }
+  function applyBasic(o){
+    if(o.title){ if(isHeb(o.title)) setIfEmpty("#titleHe",o.title); else setIfEmpty("#titleEn",o.title); }
+    if(o.author){ if(isHeb(o.author)) setIfEmpty("#authorHe",o.author); else setIfEmpty("#authorEn",o.author); }
+    setIfEmpty("#year",o.year); setIfEmpty("#blurb",o.blurb); setIfEmpty("#coverUrl",o.cover);
+  }
+
+  $("#searchBtn").addEventListener("click",async function(){
+    var q=$("#q").value.trim();if(!q){$("#q").focus();return;}
+    var btn=$("#searchBtn");btn.disabled=true;setStatus("מחפש פרטים…","");
+    var got=false, sources=[];
+
+    // 1) Google Books — metadata + cover (public, works in most environments incl. standalone)
+    try{ var g=await fetchGoogleBooks(q); if(g){applyBasic(g);got=true;sources.push("Google Books");} }catch(e){}
+    // 2) Open Library — fill any gaps
+    if(!$("#coverUrl").value.trim() || !$("#year").value.trim() || (!$("#titleHe").value.trim()&&!$("#titleEn").value.trim())){
+      try{ var o=await fetchOpenLibrary(q); if(o){applyBasic(o);got=true;if(sources.indexOf("Open Library")<0)sources.push("Open Library");} }catch(e){}
+    }
+    // 3) Claude enrichment — 2nd-language title, Hebrew blurb, theme colors (best inside the chat)
+    setStatus(got?("נמצא ב-"+sources.join(", ")+" · משלים…"):"מנסה חיפוש מעמיק…","");
+    var info=null;
+    try{ info=await fetchBookInfo(q,true); }catch(e){ try{ info=await fetchBookInfo(q,false); }catch(e2){} }
+    if(info){
+      setIfEmpty("#titleHe",info.titleHe); setIfEmpty("#titleEn",info.titleEn);
+      setIfEmpty("#authorHe",info.authorHe); setIfEmpty("#authorEn",info.authorEn);
+      setIfEmpty("#year",info.year);
+      var cur=$("#blurb").value.trim();
+      if(info.blurb && (!cur || (!isHeb(cur)&&isHeb(info.blurb)))) $("#blurb").value=info.blurb;
+      if(info.primary&&toRgb(info.primary))formPrimary=info.primary;
+      if(info.accent&&toRgb(info.accent))formAccent=info.accent;
+      got=true; sources.push("חיפוש מעמיק");
+    }
+
+    if(got) setStatus("נמצאו פרטים ✓  ("+sources.join(", ")+") — בדוק ושמור.","ok");
+    else setStatus("לא הצלחתי למשוך אוטומטית. מלא ידנית או לחץ “חפש בגוגל”.","err");
+    btn.disabled=false;
+  });
+
+  async function gbCover(q, lang){
+    try{
+      var url="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=1&country=IL"+(lang?("&langRestrict="+lang):"");
+      var r=await fetch(url); if(!r.ok) return "";
+      var d=await r.json(); var v=d&&d.items&&d.items[0]&&d.items[0].volumeInfo; var img=v&&v.imageLinks;
+      var u=img?(img.thumbnail||img.smallThumbnail||""):"";
+      return u?u.replace(/^http:/,"https:").replace("&edge=curl",""):"";
+    }catch(e){return "";}
+  }
+  // pull a cover for an existing item — prefer the Hebrew edition, then original, then Open Library
+  async function findCover(b){
+    var he=(b.titleHe||"")+" "+(b.authorHe||b.authorEn||"");
+    var en=(b.titleEn||b.titleHe||"")+" "+(b.authorEn||b.authorHe||"");
+    var c="";
+    if(b.titleHe){ c=await gbCover(he.trim(),"he"); }
+    if(!c){ c=await gbCover(en.trim(),"he"); }
+    if(!c){ c=await gbCover(en.trim(),""); }
+    if(!c){ try{ var o=await fetchOpenLibrary(en.trim()); c=o?o.cover:""; }catch(e){} }
+    return c;
+  }
+
+  async function fetchGoogleBooks(q){
+    var url="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=1&country=IL";
+    var r=await fetch(url); if(!r.ok) throw new Error("gb");
+    var d=await r.json(); var v=d&&d.items&&d.items[0]&&d.items[0].volumeInfo; if(!v) return null;
+    var ym=(v.publishedDate||"").match(/\d{4}/);
+    var img=v.imageLinks||{}; var cover=img.thumbnail||img.smallThumbnail||"";
+    cover=cover?cover.replace(/^http:/,"https:").replace("&edge=curl",""):"";
+    return {title:v.title||"", author:(v.authors&&v.authors.join(", "))||"", year:ym?ym[0]:"", blurb:v.description||"", cover:cover};
+  }
+  async function fetchOpenLibrary(q){
+    var url="https://openlibrary.org/search.json?q="+encodeURIComponent(q)+"&limit=1&fields=title,author_name,first_publish_year,cover_i";
+    var r=await fetch(url); if(!r.ok) throw new Error("ol");
+    var d=await r.json(); var doc=d&&d.docs&&d.docs[0]; if(!doc) return null;
+    var cover=doc.cover_i?("https://covers.openlibrary.org/b/id/"+doc.cover_i+"-L.jpg"):"";
+    return {title:doc.title||"", author:(doc.author_name&&doc.author_name[0])||"", year:doc.first_publish_year?String(doc.first_publish_year):"", blurb:"", cover:cover};
+  }
+  async function fetchBookInfo(query, useWeb){
+    var sys="You look up a single book or article and return ONLY a JSON object, no markdown, no backticks, no prose. "+
+      "Keys: titleHe (Hebrew title if a Hebrew edition exists, else empty), titleEn (original/English title), "+
+      "authorHe (author in Hebrew), authorEn (author in Latin letters), year (first publication year, digits only), "+
+      "blurb (2-4 sentence back-cover style description in Hebrew), "+
+      "primary (a hex color like #556b2f capturing the cover/mood/genre), accent (a second deeper hex color). "+
+      "Use empty string for unknown text fields. Return the JSON object only.";
+    var body={model:"claude-sonnet-4-6",max_tokens:1000,system:sys,messages:[{role:"user",content:"הפריט: "+query}]};
+    if(useWeb) body.tools=[{type:"web_search_20250305",name:"web_search"}];
+    var resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!resp.ok)throw new Error("api");
+    var data=await resp.json();
+    var text=(data.content||[]).filter(function(x){return x.type==="text";}).map(function(x){return x.text;}).join("\n");
+    text=text.replace(/```json/gi,"").replace(/```/g,"").trim();
+    var m=text.match(/\{[\s\S]*\}/);if(!m)return null;
+    try{return JSON.parse(m[0]);}catch(e){return null;}
+  }
+
+  /* ---------- backup / restore ---------- */
+  $("#exportBtn").addEventListener("click",async function(){
+    var books=await allBooks();
+    var blob=new Blob([JSON.stringify({app:"bookshelf",version:2,books:books},null,2)],{type:"application/json"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download="madaf-sfarim-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();a.remove();
+  });
+  $("#importBtn").addEventListener("click",function(){$("#importFile").click();});
+  $("#importFile").addEventListener("change",function(e){
+    var f=e.target.files[0];if(!f)return;var rd=new FileReader();
+    rd.onload=async function(){
+      try{
+        var data=JSON.parse(rd.result);var books=data.books||data;
+        if(!Array.isArray(books))throw new Error("bad");
+        for(var i=0;i<books.length;i++){var b=books[i];if(!b.id)b.id=uid();
+          if(!b.shelf)b.shelf="ainterested";
+          b.collection="personal";
+          b.read=isReadShelf(b.shelf);
+          await saveBook(b);}
+        render();alert("שוחזרו "+books.length+" ספרים.");
+      }catch(err){alert("הקובץ לא תקין — צריך קובץ גיבוי שנוצר מכאן.");}
+      $("#importFile").value="";
+    };
+    rd.readAsText(f);
+  });
+
+  /* ---------- overlay plumbing ---------- */
+  function showOverlay(o){o.classList.add("show");}
+  function closeOverlay(o){o.classList.remove("show");}
+  Array.prototype.forEach.call(document.querySelectorAll("[data-close]"),function(b){b.addEventListener("click",function(){closeOverlay(b.closest(".overlay"));});});
+  Array.prototype.forEach.call(document.querySelectorAll(".overlay"),function(o){o.addEventListener("mousedown",function(e){if(e.target===o)closeOverlay(o);});});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")Array.prototype.forEach.call(document.querySelectorAll(".overlay.show"),closeOverlay);});
+
+  function updateFilterCounts(unread,read){
+    var rb=document.querySelector('#filterbar button[data-filter="read"]');
+    var ub=document.querySelector('#filterbar button[data-filter="unread"]');
+    if(rb) rb.textContent="✓ קראתי ("+read+")";
+    if(ub) ub.textContent="לא קראתי ("+unread+")";
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("#libtabs button"),function(btn){
+    btn.addEventListener("click",function(){
+      libFilter=btn.getAttribute("data-lib");
+      Array.prototype.forEach.call(document.querySelectorAll("#libtabs button"),function(x){x.classList.remove("on");});
+      btn.classList.add("on");
+      render();
+    });
+  });
+
+  if(!hasStore && !hasLS){setTimeout(function(){var e=$("#count");if(e)e.textContent+=" · שמירה זמנית לסשן זה";},300);}
+  render();
+})();
+</script>
